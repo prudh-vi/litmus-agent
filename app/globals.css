@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; }
+
+html { background: #F5F1E8; }
+
+body {
+  margin: 0;
+  background: #F5F1E8;
+  color: #0A0A0F;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button, input { font: inherit; }
+
+::selection { background: #D4F542; color: #0A0A0F; }
