@@ -209,6 +209,7 @@ export function LitmusDashboard() {
             resolvedName?: string;
             ticker?: string;
             error?: string;
+            persistError?: string;
             run?: ResearchRun;
             analysis?: Analysis;
             decision?: AgentDecision;
@@ -232,11 +233,26 @@ export function LitmusDashboard() {
             if (payload.ticker)       setTicker(payload.ticker);
           }
 
-          if (type === "complete" && payload.run) {
-            setRuns((cur) => [payload.run!, ...cur.filter((r) => r.id !== payload.run!.id)]);
-            setCurrentRun(payload.run);
+          if (type === "complete") {
+            // Use the persisted run if available; otherwise synthesize one from agent
+            // output so the verdict card and history count always reflect the new run.
+            const effectiveRun: ResearchRun = payload.run ?? {
+              id: `local-${Date.now()}`,
+              company_name: payload.resolvedName || next,
+              decision: payload.decision?.decision ?? "pass",
+              confidence: payload.decision?.confidence ?? 0,
+              reasoning: payload.decision?.reasoning ?? [],
+              sources: payload.decision?.sources ?? [],
+              created_at: new Date().toISOString(),
+            };
+            setRuns((cur) => [effectiveRun, ...cur.filter((r) => r.id !== effectiveRun.id)]);
+            setCurrentRun(effectiveRun);
             if (payload.analysis) setCurrentAnalysis(payload.analysis);
             if (payload.decision) setCurrentDecision(payload.decision);
+            // Surface persist failures as a non-fatal warning in the log
+            if (payload.persistError) {
+              addLog({ step: "system", phase: "system", message: `⚠ History not saved: ${payload.persistError}` });
+            }
             setStatus("complete");
           }
 
@@ -261,7 +277,7 @@ export function LitmusDashboard() {
 
   return (
     /* Outer page — cream bg, padded, bottom gap for the floating search bar */
-    <main className="mx-auto max-w-[1340px] px-5 py-8 sm:px-8 sm:py-10 lg:px-10 pb-[120px]">
+    <main className="mx-auto max-w-[1340px] px-5 py-8 sm:px-8 sm:py-10 lg:px-10 pb-[200px]">
 
       {/* ── Hero card ────────────────────────────────────────── */}
       <section className="rounded-[28px] border-[3px] border-ink bg-lime p-6 shadow-brutal sm:p-8">
@@ -304,17 +320,10 @@ export function LitmusDashboard() {
           )}
         </div>
 
-        {/* Right column: ThinkingPanel (aligned with step bar) → Verdict History button → collapsible table */}
+        {/* Right column: Verdict History button at top → collapsible table → ThinkingPanel */}
         <div className="space-y-4 lg:sticky lg:top-5 lg:self-start">
-          <ThinkingPanel
-            entries={thinkingLog}
-            resolvedName={resolvedName}
-            originalInput={submittedCompany}
-            ticker={ticker}
-            status={status}
-          />
 
-          {/* Verdict History button — below the thinking panel */}
+          {/* Verdict History button — at top so search bar never covers it */}
           <div className="flex justify-center">
             <button
               onClick={() => setShowHistory((v) => !v)}
@@ -323,12 +332,7 @@ export function LitmusDashboard() {
                 showHistory ? "bg-ink text-white" : "bg-white hover:bg-mist",
               ].join(" ")}
             >
-              <span>Verdict History</span>
-              {runs.length > 0 && (
-                <span className={`rounded-full border px-2 py-0.5 text-[9px] font-black ${showHistory ? "border-white/30 text-white/60" : "border-ink/30 text-ink"}`}>
-                  {runs.length}
-                </span>
-              )}
+              Verdict History
             </button>
           </div>
 
@@ -341,6 +345,14 @@ export function LitmusDashboard() {
               )}
             </div>
           )}
+
+          <ThinkingPanel
+            entries={thinkingLog}
+            resolvedName={resolvedName}
+            originalInput={submittedCompany}
+            ticker={ticker}
+            status={status}
+          />
         </div>
       </div>
 

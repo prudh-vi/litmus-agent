@@ -28,8 +28,15 @@ export async function POST(request: Request) {
         const result = await runLitmusAgent(companyName, (event: AgentProgress) => send(controller, "progress", event));
         // Persist using the canonical resolved name so the history table shows clean names.
         const persistName = result.resolvedName || companyName;
-        const run = await persistResearchRun(persistName, result.decision);
-        send(controller, "complete", { ...result, run });
+        let run = null;
+        let persistError = null;
+        try {
+          run = await persistResearchRun(persistName, result.decision);
+        } catch (err) {
+          persistError = err instanceof Error ? err.message : "Failed to save run to database.";
+          console.error("[persist]", persistError);
+        }
+        send(controller, "complete", { ...result, run, persistError });
       } catch (error) {
         const message = error instanceof Error ? error.message : "The research run failed unexpectedly.";
         send(controller, "error", { error: message });
