@@ -26,7 +26,9 @@ export async function POST(request: Request) {
     async start(controller) {
       try {
         const result = await runLitmusAgent(companyName, (event: AgentProgress) => send(controller, "progress", event));
-        const run = await persistResearchRun(companyName, result.decision);
+        // Persist using the canonical resolved name so the history table shows clean names.
+        const persistName = result.resolvedName || companyName;
+        const run = await persistResearchRun(persistName, result.decision);
         send(controller, "complete", { ...result, run });
       } catch (error) {
         const message = error instanceof Error ? error.message : "The research run failed unexpectedly.";

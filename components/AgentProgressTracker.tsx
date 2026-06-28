@@ -1,48 +1,69 @@
-export type AgentStep = "idle" | "researching" | "analyzing" | "deciding" | "complete";
+export type AgentStep = "idle" | "resolving" | "researching" | "analyzing" | "deciding" | "complete";
 
 const steps = [
-  { key: "researching", title: "Research", detail: "Collecting primary evidence and market context." },
-  { key: "analyzing", title: "Analyze", detail: "Testing thesis, risks, and key operating signals." },
-  { key: "deciding", title: "Decide", detail: "Writing the evidence-backed verdict." },
+  { key: "resolving",   label: "Resolve",  num: "01" },
+  { key: "researching", label: "Research", num: "02" },
+  { key: "analyzing",   label: "Analyze",  num: "03" },
+  { key: "deciding",    label: "Decide",   num: "04" },
 ] as const;
 
-const activeIndex = (status: AgentStep) =>
-  status === "researching" ? 0 : status === "analyzing" ? 1 : status === "deciding" ? 2 : status === "complete" ? 3 : -1;
+const activeIndex = (status: AgentStep) => {
+  if (status === "resolving")   return 0;
+  if (status === "researching") return 1;
+  if (status === "analyzing")   return 2;
+  if (status === "deciding")    return 3;
+  if (status === "complete")    return 4;
+  return -1;
+};
 
-export function AgentProgressTracker({ status, company }: { status: AgentStep; company?: string }) {
-  const current = activeIndex(status);
+export function AgentProgressTracker({ status }: { status: AgentStep }) {
+  const current   = activeIndex(status);
+  const isRunning = status !== "idle" && status !== "complete";
+
   return (
-    <section className="rounded-[20px] border-[3px] border-ink bg-white p-6 shadow-brutal sm:p-7">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-black tracking-[-0.06em]">Research Agent</h2>
-          <p className="mt-1 text-sm font-medium text-slate">
-            {company ? `Running a trace for ${company}.` : "Ready to inspect a company."}
-          </p>
-        </div>
-        <span className="rounded-full border-2 border-ink bg-lime px-3 py-1 text-[10px] font-black uppercase tracking-[0.13em]">
-          LangGraph
-        </span>
-      </div>
-
-      <ol className="mt-8 space-y-0">
-        {steps.map((step, index) => {
-          const isActive = current === index;
-          const isDone = current > index || status === "complete";
-          return (
-            <li key={step.key} className="relative flex gap-4 pb-7 last:pb-0">
-              {index < steps.length - 1 && <span className="absolute left-[15px] top-8 h-[calc(100%-18px)] w-[3px] bg-ink" />}
-              <span className={`z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-[3px] border-ink text-xs font-black ${isDone ? "bg-lime" : isActive ? "bg-white" : "bg-mist"}`}>
-                {isDone ? "✓" : index + 1}
+    <section className="inline-flex items-center gap-2 rounded-[20px] border-[3px] border-ink bg-white px-5 py-4 shadow-brutal">
+      {steps.map((step, index) => {
+        const isDone   = current > index || status === "complete";
+        const isActive = current === index;
+        return (
+          <div key={step.key} className="flex items-center gap-2">
+            <div
+              className={[
+                "flex items-center gap-2 rounded-full border-[2.5px] border-ink px-4 py-1.5 text-sm font-black uppercase tracking-[0.08em] transition-colors",
+                isDone   ? "bg-lime"                        : "",
+                isActive ? "bg-white shadow-brutal-sm"      : "",
+                !isDone && !isActive ? "bg-mist opacity-60" : "",
+              ].join(" ")}
+            >
+              <span
+                className={[
+                  "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-[2px] border-ink text-[9px] font-black",
+                  isDone ? "bg-ink text-lime" : "bg-transparent",
+                ].join(" ")}
+              >
+                {isDone ? "✓" : step.num}
               </span>
-              <div className="pt-0.5">
-                <p className="font-black uppercase tracking-[0.08em]">{step.title}</p>
-                <p className="mt-1 text-sm text-slate">{isActive ? "In progress…" : step.detail}</p>
-              </div>
-            </li>
-          );
-        })}
-      </ol>
+
+              <span>{step.label}.</span>
+
+              {isActive && (
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ink opacity-60" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-ink" />
+                </span>
+              )}
+            </div>
+
+            {index < steps.length - 1 && (
+              <span className="text-xs font-black text-ink/30">→</span>
+            )}
+          </div>
+        );
+      })}
+
+      <span className="ml-3 text-[10px] font-black uppercase tracking-[0.14em] text-slate">
+        {isRunning ? "In progress…" : status === "complete" ? "Done ✓" : "Ready"}
+      </span>
     </section>
   );
 }

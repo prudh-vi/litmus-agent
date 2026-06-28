@@ -4,9 +4,8 @@
 
 * { box-sizing: border-box; }
 
-html { background: #F5F1E8; }
-
-body {
+html, body {
+  height: 100%;
   margin: 0;
   background: #F5F1E8;
   color: #0A0A0F;
@@ -16,3 +15,19 @@ body {
 button, input { font: inherit; }
 
 ::selection { background: #D4F542; color: #0A0A0F; }
+
+/* Thinking panel smooth scroll */
+.thinking-scroll {
+  scroll-behavior: smooth;
+}
+
+/* Subtle scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #C0C5CC; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #0A0A0F; }
+
+/* TradingView widget iframe sizing */
+.tradingview-widget-container iframe {
+  height: 100% !important;
+}

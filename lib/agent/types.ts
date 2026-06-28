@@ -31,7 +31,23 @@ export const DecisionSchema = z.object({
   sources: z.array(z.string().url()).max(12),
 });
 
+// Resolve step: maps user input to a canonical company name + stock ticker.
+export const ResolvedCompanySchema = z.object({
+  canonicalName: z.string().describe("The full official company name, e.g. 'Larsen & Toubro Limited'"),
+  ticker: z.string().describe("Primary stock ticker with exchange prefix (e.g., NSE:LT, NASDAQ:GOOGL, NYSE:TSLA). Empty string if unknown."),
+});
+
 export type ResearchBundle = z.infer<typeof ResearchBundleSchema>;
 export type Analysis = z.infer<typeof AnalysisSchema>;
 export type AgentDecision = z.infer<typeof DecisionSchema>;
-export type AgentProgress = { step: "research" | "analyze" | "decide"; phase: "started" | "done" };
+export type ResolvedCompany = z.infer<typeof ResolvedCompanySchema>;
+
+// AgentProgress now carries an optional human-readable message and resolution info
+// so the thinking panel in the UI can stay live throughout the run.
+export type AgentProgress = {
+  step: "resolve" | "research" | "analyze" | "decide";
+  phase: "started" | "done";
+  message?: string;
+  resolvedName?: string;
+  ticker?: string;
+};
