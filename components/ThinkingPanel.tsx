@@ -31,9 +31,17 @@ interface ThinkingPanelProps {
   originalInput: string;
   ticker: string;
   status: string;
+  onExpand?: () => void;
 }
 
-export function ThinkingPanel({ entries, resolvedName, originalInput, ticker, status }: ThinkingPanelProps) {
+export function ThinkingPanel({
+  entries,
+  resolvedName,
+  originalInput,
+  ticker,
+  status,
+  onExpand,
+}: ThinkingPanelProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll as new entries arrive
@@ -48,12 +56,30 @@ export function ThinkingPanel({ entries, resolvedName, originalInput, ticker, st
       {/* Panel header */}
       <div className="flex items-center justify-between border-b-[3px] border-ink px-5 py-4">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate">Agent Reasoning</p>
-          <h2 className="mt-0.5 text-xl font-black tracking-[-0.04em]">Thinking Log</h2>
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate">
+            {status === "idle" ? "Agent Reasoning" : "Execution State"}
+          </p>
+          <h2 className="mt-0.5 text-xl font-black tracking-[-0.04em] flex items-center gap-2">
+            <span>{status === "idle" ? "Thinking Log" : "Result"}</span>
+            {status !== "idle" && status !== "complete" && (
+              <span className="inline-block animate-spin text-sm" style={{ animationDuration: "1.5s" }}>🔄</span>
+            )}
+          </h2>
         </div>
-        <span className="rounded-full border-2 border-ink bg-lime px-3 py-1 text-[9px] font-black uppercase tracking-[0.14em]">
-          LangGraph
-        </span>
+        <div className="flex items-center gap-2">
+          {onExpand && entries.length > 0 && (
+            <button
+              onClick={onExpand}
+              className="flex items-center justify-center p-1.5 rounded-lg border-2 border-ink bg-white hover:bg-mist transition-all text-xs font-black shadow-brutal-sm active:translate-x-0.5 active:translate-y-0.5"
+              title="Expanded view of thinking"
+            >
+              ⤢
+            </button>
+          )}
+          <span className="rounded-full border-2 border-ink bg-lime px-3 py-1 text-[9px] font-black uppercase tracking-[0.14em]">
+            LangGraph
+          </span>
+        </div>
       </div>
 
       {/* Scrollable log body */}
@@ -78,7 +104,7 @@ export function ThinkingPanel({ entries, resolvedName, originalInput, ticker, st
           <>
             {/* Company resolution callout */}
             {hasResolution && (
-              <div className="rounded-[10px] border-[2.5px] border-ink bg-lime p-3 shadow-brutal-sm">
+              <div className="rounded-[10px] border-[2.5px] border-ink bg-lime p-3 shadow-brutal-sm log-entry-animate">
                 <p className="text-[10px] font-black uppercase tracking-[0.12em] text-ink/60">Company Resolved</p>
                 <p className="mt-1 font-black text-sm text-ink">
                   <span className="opacity-60">"{originalInput}"</span>
@@ -89,9 +115,9 @@ export function ThinkingPanel({ entries, resolvedName, originalInput, ticker, st
               </div>
             )}
 
-            {/* Log entries */}
+            {/* Log entries with dynamic slide-up fade-in animation */}
             {entries.map((entry, i) => (
-              <div key={i} className="flex gap-2">
+              <div key={i} className="flex gap-2 log-entry-animate">
                 {/* Step badge */}
                 <span
                   className={`mt-0.5 shrink-0 rounded border px-1.5 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] ${stepColors[entry.step]}`}
@@ -108,7 +134,7 @@ export function ThinkingPanel({ entries, resolvedName, originalInput, ticker, st
 
             {/* Blinking cursor while running */}
             {status !== "idle" && status !== "complete" && (
-              <div className="flex gap-2">
+              <div className="flex gap-2 log-entry-animate">
                 <span className="mt-0.5 shrink-0 rounded border border-ink/30 bg-mist px-1.5 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-slate">
                   …
                 </span>
@@ -118,7 +144,7 @@ export function ThinkingPanel({ entries, resolvedName, originalInput, ticker, st
 
             {/* Done summary */}
             {status === "complete" && (
-              <div className="rounded-[10px] border-[2.5px] border-ink bg-paper p-3 shadow-brutal-sm">
+              <div className="rounded-[10px] border-[2.5px] border-ink bg-paper p-3 shadow-brutal-sm log-entry-animate">
                 <p className="font-black text-[10px] uppercase tracking-[0.12em] text-slate">Run complete</p>
                 <p className="mt-0.5 text-ink font-bold">All steps finished. See verdict below ↙</p>
               </div>
